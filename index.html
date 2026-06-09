@@ -95,7 +95,7 @@ function showData(res){
   currentStudent = res.student;
   let html = `
   <div class='warning' style='margin-top: 15px;'>
-    <strong>PERHATIAN:</strong><br>Nama Lengkap Siswa harus sesuai dengan Akta Kelahiran.<br><br>Periksa data di bawah. Jika salah, pilih <b>"Tidak Sesuai"</b> lalu ketikkan perbaikannya.
+    <strong>PERHATIAN:</strong><br>Nama Lengkap Siswa harus sesuai dengan <b>Akta Kelahiran<b>.<br><br>Periksa data di bawah. Jika salah, pilih <b>"Tidak Sesuai"</b> lalu ketikkan perbaikannya.
   </div>
   <div class="data-container">`;
 
@@ -104,7 +104,7 @@ function showData(res){
     let rawValue = currentStudent[f] || "";
     let displayValue = rawValue;
 
-    if (f === "Nama Lengkap") labelTambahan = "<span class='sub-label'>* harus sesuai akta kelahiran</span>";
+    if (f === "Nama Lengkap") labelTambahan = "<span class='sub-label'>* harus sesuai akta kelahiran, gunakan huruf kapital</span>";
     else if (f === "Nama Wali" || f === "Tahun Lahir Wali") labelTambahan = " <span style='font-size:11px; color:#666;'>(jika ada)</span>";
 
     if (f === "Tanggal Lahir" && rawValue) {
