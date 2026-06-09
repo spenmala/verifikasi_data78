@@ -8,14 +8,16 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f5f5f5; color: #333; padding: 8px; display: flex; flex-direction: column; align-items: center; width: 100%; }
     .header-sekolah { text-align: center; margin: 15px 0; width: 100%; max-width: 480px; }
-    .logo-sekolah { max-height: 70px; width: auto; margin-bottom: 8px; }
+    .logo-sekolah { max-height: 80px; width: auto; margin-bottom: 8px; }
     .nama-sekolah { font-size: 16px; font-weight: bold; color: #1565c0; line-height: 1.3; }
     .card { background: white; padding: 16px 12px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,.06); margin-bottom: 16px; width: 100%; max-width: 480px; }
     h2 { text-align: center; font-size: 16px; color: #222; margin-bottom: 15px; font-weight: 700; border-bottom: 2px solid #f0f0f0; padding-bottom: 8px; }
     .form-group { margin-bottom: 15px; }
     label { font-size: 13px; font-weight: bold; display: block; margin-bottom: 6px; color: #444; }
-    input[type=text], input[type=date] { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; background-color: #fff; font-family: inherit; }
-    input:disabled { background-color: #f5f5f5; color: #222; border-color: #ddd; font-weight: 500; }
+    input[type=text], input[type=date], select { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; background-color: #fff; font-family: inherit; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+    /* Memberikan ikon panah kustom pada elemen select agar estetis di HP */
+    select { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M0 3l5 5 5-5z' fill='%23666'/></svg>"); background-repeat: no-repeat; background-position: right 12px center; background-size: 12px; padding-right: 30px; }
+    input:disabled, select:disabled { background-color: #f5f5f5; color: #222; border-color: #ddd; font-weight: 500; opacity: 1; }
     button { background: #1565c0; color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; box-shadow: 0 2px 4px rgba(21, 101, 192, 0.2); }
     button:disabled { background: #90caf9; }
     .data-container { width: 100%; margin-top: 15px; }
@@ -51,8 +53,8 @@
 </div>
 
 <script>
-// PENTING: Paste URL Web App Google Apps Script Baru Anda di bawah ini
-const API_URL = "https://script.google.com/macros/s/AKfycbzspnXsjRiaK0HhOtBll4lkjPYK1Z7QqOz8EGlXPRDGKe2VfmUoUZBMlukZ-PfvQJR-/exec";
+// PENTING: Gantilah dengan URL Web App Google Apps Script (/exec) Anda yang aktif
+const API_URL = "https://script.google.com/macros/s/AKfycbzzkAZ9rwXb63PHqfvG48YThUIU2zr-fvAmxZYGvDU2Rd1CSwVtPeMWKC2hRXeJLBPk/exec";
 
 let currentStudent = null;
 const fields = ["NIK", "Nama Lengkap", "Jenis Kelamin", "Agama", "Tempat Lahir", "Tanggal Lahir", "Nama Ayah", "Tahun Lahir Ayah", "Nama Ibu", "Tahun Lahir Ibu", "Nama Wali", "Tahun Lahir Wali"];
@@ -65,7 +67,6 @@ function cariData(){
   btn.innerText = "Mencari Data...";
   btn.disabled = true;
 
-  // Memanggil database Google Sheets via API tanpa bentrok akun Google
   fetch(`${API_URL}?action=getStudent&nisn=${nisn}`)
     .then(response => response.json())
     .then(res => {
@@ -100,18 +101,13 @@ function showData(res){
 
   fields.forEach(f=>{
     let labelTambahan = "";
-    let inputType = "text";
-    let inputModeAttr = "";
     let rawValue = currentStudent[f] || "";
     let displayValue = rawValue;
 
     if (f === "Nama Lengkap") labelTambahan = "<span class='sub-label'>* harus sesuai akta kelahiran</span>";
     else if (f === "Nama Wali" || f === "Tahun Lahir Wali") labelTambahan = " <span style='font-size:11px; color:#666;'>(jika ada)</span>";
 
-    if(["NIK", "Tahun Lahir Ayah", "Tahun Lahir Ibu", "Tahun Lahir Wali"].includes(f)) inputModeAttr = "inputmode='numeric' pattern='[0-9]*'";
-
     if (f === "Tanggal Lahir" && rawValue) {
-      inputType = "date";
       let d = new Date(rawValue);
       if(!isNaN(d.getTime())) {
         let year = d.getFullYear();
@@ -130,8 +126,33 @@ function showData(res){
         <div class="radio-group">
           <label><input type='radio' name='status_${f}' value='yes' checked onchange='handleRadioChange("${f}", "${rawValue}")'> <span>Sesuai</span></label>
           <label><input type='radio' name='status_${f}' value='no' onchange='handleRadioChange("${f}", "")'> <span>Tidak Sesuai</span></label>
-        </div>
-        <input type='${inputType}' id='input_${f}' value='${rawValue}' ${inputModeAttr} placeholder="Ketik perbaikan data di sini..." disabled>
+        </div>`;
+
+    // DINAMIS: Menentukan bentuk input input biasa, tanggal, atau Drop-down (Select)
+    if (f === "Jenis Kelamin") {
+      html += `
+        <select id='input_${f}' disabled>
+          <option value="">-- Pilih Jenis Kelamin --</option>
+          <option value="L" ${rawValue === "L" ? "selected" : ""}>L (Laki-laki)</option>
+          <option value="P" ${rawValue === "P" ? "selected" : ""}>P (Perempuan)</option>
+        </select>`;
+    } else if (f === "Agama") {
+      const agamaList = ["Islam", "Kristen", "Katholik", "Hindu", "Budha", "Khonghucu"];
+      html += `
+        <select id='input_${f}' disabled>
+          <option value="">-- Pilih Agama --</option>`;
+      agamaList.forEach(a => {
+        html += `<option value="${a}" ${rawValue.toLowerCase() === a.toLowerCase() ? "selected" : ""}>${a}</option>`;
+      });
+      html += `</select>`;
+    } else if (f === "Tanggal Lahir") {
+      html += `<input type='date' id='input_${f}' value='${rawValue}' disabled>`;
+    } else {
+      let inputModeAttr = ["NIK", "Tahun Lahir Ayah", "Tahun Lahir Ibu", "Tahun Lahir Wali"].includes(f) ? "inputmode='numeric' pattern='[0-9]*'" : "";
+      html += `<input type='text' id='input_${f}' value='${rawValue}' ${inputModeAttr} placeholder="Ketik perbaikan data di sini..." disabled>`;
+    }
+
+    html += `
       </div>
     </div>`;
   });
@@ -166,7 +187,7 @@ function simpan(){
     let val = input.value.trim();
 
     if(radioNo && radioNo.checked && val === "" && f !== "Nama Wali" && f !== "Tahun Lahir Wali") {
-      alert("Kolom " + f + " telah dipilih 'Tidak Sesuai', silakan isi dengan data perbaikan."); return;
+      alert("Kolom " + f + " telah dipilih 'Tidak Sesuai', silakan isi/pilih data perbaikan."); return;
     }
     if(f==="NIK" && val!=="" && radioNo.checked && !/^\d{16}$/.test(val)){ alert("NIK koreksi harus 16 digit angka"); return; }
     if(["Tahun Lahir Ayah", "Tahun Lahir Ibu", "Tahun Lahir Wali"].includes(f) && val!=="" && radioNo.checked && !/^\d{4}$/.test(val)){ alert(f + " koreksi harus 4 digit angka"); return; }
@@ -178,7 +199,6 @@ function simpan(){
   btnSimpan.innerText = "Menyimpan Data...";
   btnSimpan.disabled = true;
 
-  // Mengirim data perbaikan ke Google Sheets via POST API secara bersih
   fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
