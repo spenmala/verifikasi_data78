@@ -104,7 +104,7 @@ function showData(res){
     let rawValue = currentStudent[f] || "";
     let displayValue = rawValue;
 
-    if (f === "Nama Lengkap") labelTambahan = "<span class='sub-label'>* harus sesuai akta kelahiran, gunakan huruf KAPITAL</span>";
+    if (f === "Nama Lengkap") labelTambahan = "<span class='sub-label'>* harus sesuai akta kelahiran</span>";
     else if (f === "Nama Wali" || f === "Tahun Lahir Wali") labelTambahan = " <span style='font-size:11px; color:#666;'>(jika ada)</span>";
 
     if (f === "Tanggal Lahir" && rawValue) {
@@ -118,17 +118,20 @@ function showData(res){
       }
     }
 
+    // BARU & PENTING: Mengamankan karakter petik satu agar tidak memotong teks nama panjang di HTML
+    let safeRawValue = String(rawValue).replace(/'/g, "\\'");
+    let safeFieldName = String(f).replace(/'/g, "\\'");
+
     html += `
     <div class="data-row">
       <div class="data-label">Data ${f}${labelTambahan}</div>
       <div class="data-awal"><strong>Data Sekarang:</strong> ${displayValue || "-"}</div>
       <div class="action-group">
         <div class="radio-group">
-          <label><input type='radio' name='status_${f}' value='yes' checked onchange='handleRadioChange("${f}", "${rawValue}")'> <span>Sesuai</span></label>
-          <label><input type='radio' name='status_${f}' value='no' onchange='handleRadioChange("${f}", "")'> <span>Tidak Sesuai</span></label>
+          <label><input type='radio' name='status_${f}' value='yes' checked onchange="handleRadioChange('${safeFieldName}', '${safeRawValue}')"> <span>Sesuai</span></label>
+          <label><input type='radio' name='status_${f}' value='no' onchange="handleRadioChange('${safeFieldName}', '')"> <span>Tidak Sesuai</span></label>
         </div>`;
 
-    // DINAMIS: Menentukan bentuk input input biasa, tanggal, atau Drop-down (Select)
     if (f === "Jenis Kelamin") {
       html += `
         <select id='input_${f}' disabled>
@@ -149,7 +152,9 @@ function showData(res){
       html += `<input type='date' id='input_${f}' value='${rawValue}' disabled>`;
     } else {
       let inputModeAttr = ["NIK", "Tahun Lahir Ayah", "Tahun Lahir Ibu", "Tahun Lahir Wali"].includes(f) ? "inputmode='numeric' pattern='[0-9]*'" : "";
-      html += `<input type='text' id='input_${f}' value='${rawValue}' ${inputModeAttr} placeholder="Ketik perbaikan data di sini..." disabled>`;
+      
+      // Menggunakan nilai asli (rawValue) di dalam atribut value agar saat input teks dikirim kembali datanya murni
+      html += `<input type='text' id='input_${f}' value="${rawValue.replace(/"/g, '&quot;')}" ${inputModeAttr} placeholder="Ketik perbaikan data di sini..." disabled>`;
     }
 
     html += `
