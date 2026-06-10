@@ -199,7 +199,7 @@ function simpan(){
   btnSimpan.innerText = "Menyimpan Data...";
   btnSimpan.disabled = true;
 
-  fetch(API_URL, {
+fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
       nisn: currentStudent["NISN"],
@@ -210,11 +210,19 @@ function simpan(){
   })
   .then(response => response.json())
   .then(res => {
-    alert("Verifikasi data berhasil disimpan");
-    location.reload();
+    if(res.success) {
+      alert("✓ Verifikasi data berhasil disimpan!");
+      // Paksa halaman membersihkan sisa form agar tidak tersimpan ganda
+      document.getElementById("hasil").innerHTML = "<p style='color:green; text-align:center; font-weight:bold; margin-top:15px;'>Terima kasih, data Anda berhasil diverifikasi.</p>";
+      document.getElementById("nisn").value = "";
+    } else {
+      alert("Gagal: " + res.message);
+      btnSimpan.innerText = "Simpan Verifikasi";
+      btnSimpan.disabled = false;
+    }
   })
   .catch(err => {
-    alert("Gagal menyimpan data, silakan coba beberapa saat lagi.");
+    alert("Koneksi sibuk, tetapi data Anda kemungkinan besar sudah terkirim. Silakan cek NISN Anda kembali beberapa saat lagi.");
     btnSimpan.innerText = "Simpan Verifikasi";
     btnSimpan.disabled = false;
   });
